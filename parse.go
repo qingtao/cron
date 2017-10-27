@@ -8,6 +8,18 @@ import (
 	"time"
 )
 
+// Time存放任务的时间
+// 格式：
+// second minute hour dom         month  dow
+// 秒     分     时   每月的一天  月    周几
+// second:	"0-59", ",", "-", "/", "*"
+// minute:	"0-59", ",", "-", "/", "*"
+// hour:	"0-23", ",", "-", "/", "*"
+// dom:		"1-31", ",", "-", "/", "*"
+// month:	"1-12", ",", "-", "/", "*"
+// second:	"0-6",  ",", "-", "/", "*"
+//
+// 注意：dom和dow都不是*时，时间是两者交集
 type Time struct {
 	Second []int `json:"second"`
 	Minute []int `json:"minute"`
@@ -25,8 +37,10 @@ const (
 	lengthTime = 6
 )
 
+// 定义'/'递增的数值
 var slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
 
+// 时间的最小和最大值
 type TimeOption struct {
 	Min, Max int
 }
@@ -56,17 +70,21 @@ func checkSlash(s string) bool {
 	return false
 }
 
+// 分割'/'获取int类型的时间切片
 func splitSlash(s, typ string) ([]int, error) {
 	ss := strings.Split(s, slash)
+	//如果不是1/2这种格式，返回错误
 	if len(ss) != 2 {
 		return nil, ErrNoSlash
 	}
+	//检查间隔是否有效
 	if !checkSlash(ss[1]) {
 		return nil, errors.New(fmt.Sprintf(`"%s": the number after %s must be one of: %s`, typ, slash, slashOption))
 	}
 
 	op := timeOption[typ]
 	min, max := op.Min, op.Max
+	//转换字符串到整型数值
 	s1, err := strconv.Atoi(ss[0])
 	if err != nil {
 		return nil, err
@@ -86,11 +104,13 @@ func splitSlash(s, typ string) ([]int, error) {
 	return res, nil
 }
 
+// 新增时间数值a到现有切片s，a可能是[]int，或者是int
 func Add(s []int, a interface{}) []int {
 	switch a.(type) {
 	case int:
 		v, _ := a.(int)
 		if len(s) > 0 {
+			//检查a是否已存在
 			for i := 0; i < len(s); i++ {
 				if v == s[i] {
 					return s
@@ -104,6 +124,7 @@ func Add(s []int, a interface{}) []int {
 			s = append(s, v...)
 		} else {
 		TOP:
+			//检查a中的每个值是否s已含有
 			for i := 0; i < len(v); i++ {
 				for j := 0; j < len(s); j++ {
 					if v[i] == s[j] {
@@ -117,6 +138,7 @@ func Add(s []int, a interface{}) []int {
 	return s
 }
 
+//分割-
 func splitHyphen(s, typ string) ([]int, error) {
 	ss := strings.Split(s, hyphen)
 	if len(ss) != 2 {
@@ -146,8 +168,10 @@ func splitHyphen(s, typ string) ([]int, error) {
 	return res, nil
 }
 
+// 获取以","组成的数值
 func splitComma(s, typ string) ([]int, error) {
 	times := make([]int, 0)
+	//s是"*",返回所有有效值
 	if s == "*" {
 		op := timeOption[typ]
 		min, max := op.Min, op.Max
@@ -155,6 +179,7 @@ func splitComma(s, typ string) ([]int, error) {
 			times = append(times, i)
 		}
 	} else {
+		//首先以","分割字符串
 		ss := strings.Split(s, comma)
 		for _, v := range ss {
 			n := strings.Index(v, slash)
@@ -178,6 +203,7 @@ func splitComma(s, typ string) ([]int, error) {
 						return nil, err
 					}
 					times = Add(times, t)
+					//单个数字的情况
 				} else if len(ss) == 1 {
 					i, err := strconv.Atoi(s)
 					if err != nil {
@@ -196,31 +222,38 @@ func splitComma(s, typ string) ([]int, error) {
 
 }
 
+// 解析字符串s到*Time，失败返回错误
 func Parse(s string) (*Time, error) {
 	ss := strings.Fields(s)
 	if len(ss) != 6 {
 		return nil, ErrField
 	}
+	//秒
 	second, err := splitComma(ss[0], "second")
 	if err != nil {
 		return nil, err
 	}
+	//分钟
 	minute, err := splitComma(ss[1], "minute")
 	if err != nil {
 		return nil, err
 	}
+	//小时
 	hour, err := splitComma(ss[2], "hour")
 	if err != nil {
 		return nil, err
 	}
+	//每月第几天
 	dom, err := splitComma(ss[3], "dom")
 	if err != nil {
 		return nil, err
 	}
+	//月份
 	month, err := splitComma(ss[4], "month")
 	if err != nil {
 		return nil, err
 	}
+	//每周几
 	dow, err := splitComma(ss[5], "dow")
 	if err != nil {
 		return nil, err
@@ -228,6 +261,7 @@ func Parse(s string) (*Time, error) {
 	return &Time{second, minute, hour, dom, month, dow}, nil
 }
 
+// 检查a是否存在b
 func checkInt(a []int, b int) bool {
 	for i := 0; i < len(a); i++ {
 		if a[i] == b {
@@ -237,6 +271,7 @@ func checkInt(a []int, b int) bool {
 	return false
 }
 
+// 检查时间u是否符合时间t的定义
 func (t *Time) Check(u time.Time) bool {
 	_, m, d := u.Date()
 	H, M, S := u.Clock()

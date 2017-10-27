@@ -1,3 +1,6 @@
+// Package cron 提供一个基本的定时任务管理工具
+// 只实现了功能，使用方法在测试文件和Readme
+
 package cron
 
 import (
@@ -40,14 +43,19 @@ func lastDay(m, y int) int {
 
 // Job is cron schedule work
 type Job struct {
+	// Name used for store or delete job
 	Name string
 	Time *Time
+	// what to do
 	Func func()
 
+	// used for stop the job
 	cancel context.CancelFunc
-	c      chan time.Time
+	// receive time
+	c chan time.Time
 }
 
+// cancel the job
 func (job *Job) Cancel() {
 	job.cancel()
 	select {
@@ -57,6 +65,7 @@ func (job *Job) Cancel() {
 	close(job.c)
 }
 
+// run job, return when  read from ctx.Done()
 func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 	for {
 		select {
@@ -64,6 +73,7 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 			errCh <- fmt.Errorf("job: %s - %s", job.Name, ctx.Err())
 			return
 		case u := <-job.c:
+			// check time, run job.Func or not
 			if job.Time.Check(u) {
 				go job.Func()
 			}
@@ -71,6 +81,7 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 	}
 }
 
+// cron 管理所有任务，每一秒向Jobs内的所有成员发送当前时间
 type Cron struct {
 	Jobs *sync.Map
 	Err  chan error
@@ -78,11 +89,13 @@ type Cron struct {
 	cancel context.CancelFunc
 }
 
+// 创建一个新的Cron, 使用context.Context和context.CancelFunc
 func New(ctx context.Context, cancel context.CancelFunc) *Cron {
 	jobs, ch := new(sync.Map), make(chan error)
 	return &Cron{jobs, ch, cancel}
 }
 
+// 添加成员到Cron
 func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	t, err := Parse(s)
 	if err != nil {
@@ -93,6 +106,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 
 	job := &Job{name, t, f, cancel, ch}
 	_, ok := c.Jobs.LoadOrStore(name, job)
+	// 如果任务已经存在，返回错误到c.Err，否则执行job.Func
 	if ok {
 		c.Err <- fmt.Errorf("job already exists: %s", name)
 		return
@@ -100,6 +114,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	go job.Run(ctx, c.Err)
 }
 
+// 删除名称为name的任务
 func (c *Cron) Delete(name string) {
 	job, ok := c.Jobs.Load(name)
 	if ok {
@@ -110,21 +125,25 @@ func (c *Cron) Delete(name string) {
 	}
 }
 
+// 启动Cron，定时器为1秒
 func (c *Cron) Start(ctx context.Context) {
 	tick := time.Tick(1 * time.Second)
 	for {
 		select {
 		case t := <-tick:
+			//遍历Jobs的成员，发送当前时间到每个job.c
 			c.Jobs.Range(func(k, v interface{}) bool {
 				if job, ok := v.(*Job); ok {
 					select {
 					case job.c <- t:
+					//发送超时时间
 					case <-time.After(time.Duration(jobTimeout) * time.Microsecond):
 						c.Err <- errors.New("schedule check job timeout")
 					}
 				}
 				return true
 			})
+		//等待退出命令
 		case <-ctx.Done():
 			c.Err <- errors.New("cron schedule stopped")
 			return
