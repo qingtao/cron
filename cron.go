@@ -1,6 +1,5 @@
 // Package cron 提供一个基本的定时任务管理工具
-// 只实现了功能，使用方法在测试文件和Readme
-
+//  使用方法在测试文件和Readme
 package cron
 
 import (
