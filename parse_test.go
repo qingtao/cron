@@ -1,8 +1,10 @@
 package cron
 
 import (
+	"fmt"
 	"sort"
 	"testing"
+	"time"
 )
 
 var years = []int{2016, 2017, 2018}
@@ -112,6 +114,11 @@ func TestParse(t *testing.T) {
 		Hourly,
 		Minute,
 		Second,
+		"0 0 0 * 10 * L",
+		"0 0 0 * 9 * A",
+		"0 0 0 1 8 * L",
+		"0 0 0 * 7 1 L",
+		"0 0 0 1 7 6 L",
 	}
 	for k, v := range s {
 		a, err := Parse(v)
@@ -121,4 +128,29 @@ func TestParse(t *testing.T) {
 			t.Logf("ok %d: %4s: %v\n", k, v, a)
 		}
 	}
+}
+
+func TestCheck(t *testing.T) {
+	a := []*Time{
+		{[]int{0}, []int{0}, []int{0}, nil, []int{1}, nil, true},
+		{[]int{0}, []int{0}, []int{0}, nil, []int{2}, nil, true},
+		{[]int{0}, []int{0}, []int{0}, nil, []int{4}, nil, true},
+		{[]int{0}, []int{0}, []int{0}, []int{29}, []int{1, 3, 4}, []int{0, 1, 2, 3, 4, 5, 6}, false},
+	}
+	u := make([]time.Time, 0)
+	loc := time.Now().Location()
+	for j := 2016; j < 2018; j++ {
+		for i := 1; i < 5; i++ {
+			for n := 28; n < 32; n++ {
+				u = append(u, time.Date(j, time.Month(i), n, 0, 0, 0, 0, loc))
+			}
+		}
+	}
+	for k, v := range a {
+		fmt.Printf("%2d - %v\n", k, v)
+		for kk, vv := range u {
+			fmt.Printf("%2d - %d-%d-%d %v\n", kk, vv.Year(), vv.Month(), vv.Day(), v.Check(vv))
+		}
+	}
+
 }

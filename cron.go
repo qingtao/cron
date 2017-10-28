@@ -23,23 +23,6 @@ var (
 	Second  = "* * * * * *"
 )
 
-// get last day of month, m is the month, y is year
-func lastDay(m, y int) int {
-	switch m {
-	case 1, 3, 5, 7, 8, 10, 12:
-		return 31
-	case 4, 6, 9, 11:
-		return 30
-	}
-	if m > 12 || m < 1 {
-		return -1
-	}
-	//the last day February
-	loc := time.Now().Location()
-	last := time.Date(y, time.March, 1, 0, 0, 0, 0, loc).AddDate(0, 0, -1)
-	return last.Day()
-}
-
 // Job is cron schedule work
 type Job struct {
 	// Name used for store or delete job

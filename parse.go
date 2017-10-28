@@ -10,7 +10,7 @@ import (
 
 //Time存放任务的时间
 //
-//格式：
+//格式:
 //	second	minute	hour	dom		month	dow
 //	秒	分	时	每月的第一天	月	每周的第几天
 //	second:	0-59 , - / * 秒
@@ -20,7 +20,8 @@ import (
 //	month:	1-12 , - / * 月
 //	dow:	0-6  , - / * 每周第几天
 //
-// 注意：dom和dow都不是*时，时间是两者交集
+//	例: 每天6点 s = "0 0 6 * * *"
+// 注意: dom和dow都不是*时，时间是两者交集
 type Time struct {
 	Second []int `json:"second"`
 	Minute []int `json:"minute"`
@@ -28,6 +29,8 @@ type Time struct {
 	Dom    []int `json:"dom"`
 	Month  []int `json:"month"`
 	Dow    []int `json:"dow"`
+	//指定lastDom时忽略Dow
+	LastDayOfMonth bool
 }
 
 const (
@@ -55,11 +58,14 @@ var timeOption = map[string]TimeOption{
 	"dow":    TimeOption{0, 6},
 }
 
+const LastDayOfMonth = "L"
+
 var (
-	ErrNoSlash     = errors.New("no slash")
-	ErrNoHyphen    = errors.New("no hyphen")
-	ErrTimeInvalid = errors.New("invalid times")
-	ErrField       = errors.New("field not enough")
+	ErrNoSlash        = errors.New("no slash")
+	ErrNoHyphen       = errors.New("no hyphen")
+	ErrTimeInvalid    = errors.New("invalid times")
+	ErrField          = errors.New("field not enough")
+	ErrLastDayOfMonth = errors.New(`LastDayOfMonth only accept "L", "dom" and "dow" must be "*"`)
 )
 
 func checkSlash(s string) bool {
@@ -226,8 +232,18 @@ func splitComma(s, typ string) ([]int, error) {
 // 解析字符串s到*Time，失败返回错误
 func Parse(s string) (*Time, error) {
 	ss := strings.Fields(s)
+	lastDom := false
 	if len(ss) != 6 {
-		return nil, ErrField
+		if len(ss) == 7 {
+			if ss[6] == LastDayOfMonth && ss[3] == "*" && ss[5] == "*" {
+				lastDom = true
+				ss = ss[0:6]
+			} else {
+				return nil, ErrLastDayOfMonth
+			}
+		} else {
+			return nil, ErrField
+		}
 	}
 	//秒
 	second, err := splitComma(ss[0], "second")
@@ -244,22 +260,25 @@ func Parse(s string) (*Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	//每月第几天
-	dom, err := splitComma(ss[3], "dom")
-	if err != nil {
-		return nil, err
-	}
 	//月份
 	month, err := splitComma(ss[4], "month")
 	if err != nil {
 		return nil, err
 	}
-	//每周几
-	dow, err := splitComma(ss[5], "dow")
-	if err != nil {
-		return nil, err
+	//每月第几天
+	if !lastDom {
+		dom, err := splitComma(ss[3], "dom")
+		if err != nil {
+			return nil, err
+		}
+		//每周几
+		dow, err := splitComma(ss[5], "dow")
+		if err != nil {
+			return nil, err
+		}
+		return &Time{second, minute, hour, dom, month, dow, lastDom}, nil
 	}
-	return &Time{second, minute, hour, dom, month, dow}, nil
+	return &Time{second, minute, hour, nil, month, nil, lastDom}, nil
 }
 
 // 检查a是否存在b
@@ -272,18 +291,42 @@ func checkInt(a []int, b int) bool {
 	return false
 }
 
+// get last day of month, m is the month, y is year
+func lastDay(m, y int) int {
+	switch m {
+	case 1, 3, 5, 7, 8, 10, 12:
+		return 31
+	case 4, 6, 9, 11:
+		return 30
+	}
+	if m > 12 || m < 1 {
+		return -1
+	}
+	//the last day February
+	loc := time.Now().Location()
+	last := time.Date(y, time.March, 1, 0, 0, 0, 0, loc).AddDate(0, 0, -1)
+	return last.Day()
+}
+
 // 检查时间u是否符合时间t的定义
 func (t *Time) Check(u time.Time) bool {
-	_, m, d := u.Date()
+	if !(time.Now().Sub(u) < 500*time.Millisecond) {
+		return false
+	}
+	y, m, d := u.Date()
 	H, M, S := u.Clock()
 	D := u.Weekday()
 	if checkInt(t.Second, S) {
 		if checkInt(t.Minute, M) {
 			if checkInt(t.Hour, H) {
-				if checkInt(t.Dom, d) {
-					if checkInt(t.Dow, int(D)) {
-						if checkInt(t.Month, int(m)) {
-							if time.Now().Sub(u) < 500*time.Millisecond {
+				if checkInt(t.Month, int(m)) {
+					if t.LastDayOfMonth {
+						if d == lastDay(int(m), y) {
+							return true
+						}
+					} else {
+						if checkInt(t.Dom, d) {
+							if checkInt(t.Dow, int(D)) {
 								return true
 							}
 						}

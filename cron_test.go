@@ -45,7 +45,7 @@ func TestCron(t *testing.T) {
 		fmt.Println("delete s1")
 		cr.Delete("s1")
 	}()
-	time.Sleep(10 * time.Second)
+	time.Sleep(15 * time.Second)
 	fmt.Println("stop cron")
 	cr.Stop()
 	fmt.Println("wait stop!")
