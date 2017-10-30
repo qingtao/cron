@@ -15,12 +15,12 @@ var (
 	jobTimeout = 10
 
 	// time used usually
-	Monthly = "0 3 3 1 * *"
-	Weekly  = "0 10 3 * * 0"
+	Monthly = "0 3  3 1 * *"
+	Weekly  = "0 13 3 * * 0"
 	Daily   = "0 23 3 * * *"
 	Hourly  = "0 33 * * * *"
-	Minute  = "0 * * * * *"
-	Second  = "* * * * * *"
+	Minute  = "0 *  * * * *"
+	Second  = "* *  * * * *"
 )
 
 // Job is cron schedule work

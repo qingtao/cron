@@ -29,7 +29,7 @@ type Time struct {
 	Dom    []int `json:"dom"`
 	Month  []int `json:"month"`
 	Dow    []int `json:"dow"`
-	//指定lastDom时忽略Dow
+	//指定LastDayOfMonth时忽略Dom和Dow
 	LastDayOfMonth bool
 }
 
@@ -265,8 +265,8 @@ func Parse(s string) (*Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	//每月第几天
 	if !lastDom {
+		//每月第几天
 		dom, err := splitComma(ss[3], "dom")
 		if err != nil {
 			return nil, err
@@ -302,7 +302,7 @@ func lastDay(m, y int) int {
 	if m > 12 || m < 1 {
 		return -1
 	}
-	//the last day February
+	//the last day of February
 	loc := time.Now().Location()
 	last := time.Date(y, time.March, 1, 0, 0, 0, 0, loc).AddDate(0, 0, -1)
 	return last.Day()
@@ -320,6 +320,7 @@ func (t *Time) Check(u time.Time) bool {
 		if checkInt(t.Minute, M) {
 			if checkInt(t.Hour, H) {
 				if checkInt(t.Month, int(m)) {
+					//如果指定最后一天，否则检查Dom和Dow
 					if t.LastDayOfMonth {
 						if d == lastDay(int(m), y) {
 							return true
