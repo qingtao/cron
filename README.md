@@ -1,6 +1,7 @@
 # cron
 ## 新建立的定时任务模块
-### 使用方法：
+### 文档：[![GoDoc](https://godoc.org/github.com/qingtao/cron?status.svg)](https://godoc.org/github.com/qingtao/cron)
+### 使用方法:
 ```go
 package main
 
@@ -37,6 +38,5 @@ func main() {
 }
 ```
 
-只完成了功能测试，未完整验证性能和全部时间有效性
+完成功能测试，未完整验证性能和全部时间有效性。
 
-。
