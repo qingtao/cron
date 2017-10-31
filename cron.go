@@ -24,9 +24,9 @@ const (
 )
 
 var (
-	ErrCronClosed   = errors.New("cron schedule stopped")
-	ErrCleanChannel = errors.New("cron stopped, clean error channel")
-	ErrChanClosed   = errors.New("channel closed")
+	ErrCronClosed   = errors.New("Cron schedule stopped")
+	ErrCleanChannel = errors.New("Cron stopped, clean error channel")
+	ErrChanClosed   = errors.New("Channel closed")
 )
 
 // Job is cron schedule work
@@ -50,7 +50,6 @@ func (job *Job) Cancel() {
 	case <-job.c:
 	default:
 	}
-	close(job.c)
 }
 
 // run job, return when  read from ctx.Done()
@@ -58,11 +57,11 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 	for {
 		select {
 		case <-ctx.Done():
-			send(errCh, fmt.Errorf("job: %s - %s", job.Name, ctx.Err()))
+			send(errCh, fmt.Errorf("Job [%s] %s", job.Name, ctx.Err()))
 			return
-		case u := <-job.c:
+		case u, ok := <-job.c:
 			// check time, run job.Func or not
-			if job.Time.Check(u) {
+			if ok && job.Time.Check(u) {
 				go job.Func()
 			}
 		}
@@ -72,34 +71,46 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 // cron 管理所有任务，每一秒向Jobs内的所有成员发送当前时间
 type Cron struct {
 	Jobs *sync.Map
-	Err  chan error
 
+	err    chan error
 	cancel context.CancelFunc
 }
 
 // 创建一个新的Cron, 使用context.Context和context.CancelFunc
-func New(ctx context.Context, cancel context.CancelFunc) *Cron {
+func New(cancel context.CancelFunc) *Cron {
 	jobs, ch := new(sync.Map), make(chan error)
 	return &Cron{jobs, ch, cancel}
+}
+
+// 等待读取cron发送的错误，f的参数是error
+func (c *Cron) Wait(ctx context.Context, f func(error)) {
+	for {
+		err, ok := <-c.err
+		if !ok {
+			f(ErrChanClosed)
+			return
+		}
+		f(err)
+	}
 }
 
 // 添加成员到Cron
 func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	t, err := Parse(s)
 	if err != nil {
-		send(c.Err, err)
+		send(c.err, err)
 	}
 	ch := make(chan time.Time)
 	ctx, cancel := context.WithCancel(ctx)
 
 	job := &Job{name, t, f, cancel, ch}
 	_, ok := c.Jobs.LoadOrStore(name, job)
-	// 如果任务已经存在，返回错误到c.Err，否则执行job.Func
+	// 如果任务已经存在，返回错误到c.err，否则执行job.Func
 	if ok {
-		send(c.Err, fmt.Errorf("job already exists: %s", name))
+		send(c.err, fmt.Errorf("Job [%s] is already exists", name))
 		return
 	}
-	go job.Run(ctx, c.Err)
+	go job.Run(ctx, c.err)
 }
 
 // 删除名称为name的任务
@@ -135,29 +146,17 @@ func (c *Cron) Start(ctx context.Context) {
 					case job.c <- t:
 					//发送超时时间
 					case <-time.After(time.Duration(jobTimeout) * time.Microsecond):
-						send(c.Err, errors.New("schedule check job timeout"))
+						send(c.err, fmt.Errorf("Cron wake job [%s] timeout", job.Name))
 					}
 				}
 				return true
 			})
 		//等待退出命令
 		case <-ctx.Done():
-			send(c.Err, ErrCronClosed)
-			close(c.Err)
+			send(c.err, ErrCronClosed)
+			close(c.err)
 			return
 		}
-	}
-}
-
-// 等待读取cron发送的错误，f的参数是error
-func (c *Cron) Wait(ctx context.Context, f func(error)) {
-	for {
-		err, ok := <-c.Err
-		if !ok {
-			f(ErrChanClosed)
-			return
-		}
-		f(err)
 	}
 }
 

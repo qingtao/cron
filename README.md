@@ -13,23 +13,27 @@ import (
 )
 
 func main() {
-
+    //新的context和cancel
 	ctx, cancel := context.WithCancel(context.Background())
-	cron := cron.New(ctx, cancel)
 
-	go func() {
-		for err := range cron.Err {
-			fmt.Printf("ERROR: %s\n", err)
-		}
-	}()
-	go cron.Start(ctx)
+    //创建新的cron.Cron
+	c := cron.New(cancel)
+    //处理错误
+    go cr.Wait(ctx, func(e error) {
+		fmt.Println(e)
+	})
 
+    //启动计划任务管理进程
+	go c.Start(ctx)
+
+    //定义时间
 	s1 := "1/2 * * * * *"
 	s1 := "15 13 * * * *"
-	cron.AddFunc(ctx, "s1", s1, func() {
+    //添加计划任务
+	c.AddFunc(ctx, "s1", s1, func() {
 		fmt.Printf("s1 %s: %s\n", s1, time.Now())
 	})
-	cron.AddFunc(ctx, "s2", s2, func() {
+	c.AddFunc(ctx, "s2", s2, func() {
 		fmt.Printf("s2 %s: %s\n", s2, time.Now())
 	})
 .
