@@ -76,14 +76,14 @@ type Cron struct {
 	cancel context.CancelFunc
 }
 
-// 创建一个新的Cron, 使用context.Context和context.CancelFunc
+// 创建一个新的Cron, 使用context.WithCancel新建ctx和cancel, cancel在New函数使用，ctx分别用于Start函数和AddFunc函数
 func New(cancel context.CancelFunc) *Cron {
 	jobs, ch := new(sync.Map), make(chan error)
 	return &Cron{jobs, ch, cancel}
 }
 
 // 等待读取cron发送的错误，f的参数是error
-func (c *Cron) Wait(ctx context.Context, f func(error)) {
+func (c *Cron) Wait(f func(error)) {
 	for {
 		err, ok := <-c.err
 		if !ok {
@@ -94,7 +94,7 @@ func (c *Cron) Wait(ctx context.Context, f func(error)) {
 	}
 }
 
-// 添加成员到Cron
+// 添加成员到Cron，ctx是context.WithCancel的返回值
 func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	t, err := Parse(s)
 	if err != nil {

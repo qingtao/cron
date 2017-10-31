@@ -18,7 +18,7 @@ func TestCron(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cr := New(cancel)
 
-	go cr.Wait(ctx, func(err error) {
+	go cr.Wait(func(err error) {
 		fmt.Println(err)
 	})
 
