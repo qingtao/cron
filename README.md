@@ -19,8 +19,8 @@ func main() {
     //创建新的cron.Cron
 	c := cron.New(cancel)
     //处理错误
-    go cr.Wait(ctx, func(e error) {
-		fmt.Println(e)
+    go cr.Wait(func(err error) {
+		fmt.Println(err)
 	})
 
     //启动计划任务管理进程
@@ -36,9 +36,6 @@ func main() {
 	c.AddFunc(ctx, "s2", s2, func() {
 		fmt.Printf("s2 %s: %s\n", s2, time.Now())
 	})
-.
-.
-.
 }
 ```
 
