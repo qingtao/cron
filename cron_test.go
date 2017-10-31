@@ -15,11 +15,9 @@ func TestCron(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cr := New(ctx, cancel)
 
-	go func() {
-		for err := range cr.Err {
-			fmt.Printf("ERROR: %s\n", err)
-		}
-	}()
+	go cr.Wait(ctx, func(err error) {
+		fmt.Println(err)
+	})
 
 	fmt.Printf("%s\n", time.Now())
 	fmt.Println("add s1")
@@ -48,6 +46,6 @@ func TestCron(t *testing.T) {
 	time.Sleep(15 * time.Second)
 	fmt.Println("stop cron")
 	cr.Stop()
+	time.Sleep(2 * time.Second)
 	fmt.Println("wait stop!")
-	time.Sleep(1 * time.Second)
 }
