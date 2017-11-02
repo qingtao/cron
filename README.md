@@ -1,6 +1,6 @@
 # cron
-## 新建立的定时任务模块
-### 文档：[![GoDoc](https://godoc.org/github.com/qingtao/cron?status.svg)](https://godoc.org/github.com/qingtao/cron)
+## 提供一个基本的定时任务管理工具.
+### GoDoc：[![GoDoc](https://godoc.org/github.com/qingtao/cron?status.svg)](https://godoc.org/github.com/qingtao/cron)
 ### 使用方法:
 ```go
 package main
@@ -38,6 +38,4 @@ func main() {
     })
 }
 ```
-
-完成功能测试，未完整验证性能和全部时间有效性。
 
