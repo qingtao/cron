@@ -50,12 +50,12 @@ type TimeOption struct {
 }
 
 var timeOption = map[string]TimeOption{
-	"second": TimeOption{0, 59},
-	"minute": TimeOption{0, 59},
-	"hour":   TimeOption{0, 23},
-	"dom":    TimeOption{1, 31},
-	"month":  TimeOption{1, 12},
-	"dow":    TimeOption{0, 6},
+	"second": {0, 59},
+	"minute": {0, 59},
+	"hour":   {0, 23},
+	"dom":    {1, 31},
+	"month":  {1, 12},
+	"dow":    {0, 6},
 }
 
 //LastDayOfMonth是Time的第七个字段

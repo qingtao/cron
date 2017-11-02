@@ -48,10 +48,10 @@ type Data struct {
 
 func TestAdd(t *testing.T) {
 	data := []*Data{
-		&Data{A: 2, S: []int{1, 3, 5, 7, 20}},
-		&Data{A: 22, S: []int{1, 2, 3, 6, 7, 22}},
-		&Data{A: []int{2, 22, 33, 40}, S: []int{1, 2, 3, 6, 7, 22}},
-		&Data{A: []int{1, 2, 6, 7, 8, 10, 22, 9, 20}, S: []int{3, 5, 9, 22}},
+		{A: 2, S: []int{1, 3, 5, 7, 20}},
+		{A: 22, S: []int{1, 2, 3, 6, 7, 22}},
+		{A: []int{2, 22, 33, 40}, S: []int{1, 2, 3, 6, 7, 22}},
+		{A: []int{1, 2, 6, 7, 8, 10, 22, 9, 20}, S: []int{3, 5, 9, 22}},
 	}
 
 	t.Log("before add action:")
@@ -84,7 +84,7 @@ func TestSplit(t *testing.T) {
 		"0-23",
 		"1-6",
 	}
-	for name, _ := range timeOption {
+	for name := range timeOption {
 		t.Run(name, func(t *testing.T) {
 			for k, v := range s {
 				a, err := splitHyphen(v, name)
