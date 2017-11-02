@@ -315,7 +315,7 @@ func lastDay(m, y int) int {
 
 //Check 检查时间u是否符合时间t的定义
 func (t *Time) Check(u time.Time) bool {
-	if !(time.Now().Sub(u) < 500*time.Millisecond) {
+	if time.Now().Sub(u) > 500*time.Millisecond {
 		return false
 	}
 	y, m, d := u.Date()
