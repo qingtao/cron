@@ -7,9 +7,10 @@ Example:
 
 	import (
 		"context"
-		"github.com/qingtao/cron"
 		"fmt"
 		"time"
+
+		"github.com/qingtao/cron"
 	)
 
 	func main() {
