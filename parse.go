@@ -9,7 +9,6 @@ import (
 )
 
 //Time存放任务的时间
-//
 //格式:
 //	second	minute	hour	dom		month	dow
 //	秒	分	时	每月的第一天	月	每周的第几天
@@ -42,10 +41,10 @@ const (
 	lengthTime = 6
 )
 
-// 定义'/'递增的数值
+//定义'/'递增的数值
 var slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
 
-// 时间的最小和最大值
+//TimeOption时间的最小和最大值
 type TimeOption struct {
 	Min, Max int
 }
@@ -59,13 +58,19 @@ var timeOption = map[string]TimeOption{
 	"dow":    TimeOption{0, 6},
 }
 
+//LastDayOfMonth是Time的第七个字段
 const LastDayOfMonth = "L"
 
 var (
-	ErrNoSlash        = errors.New("no slash")
-	ErrNoHyphen       = errors.New("no hyphen")
-	ErrTimeInvalid    = errors.New("invalid times")
-	ErrField          = errors.New("field not enough")
+	//ErrNoSlash slash不存在
+	ErrNoSlash = errors.New("no slash")
+	//ErrNoHyphen hyphen不存在
+	ErrNoHyphen = errors.New("no hyphen")
+	//ErrTimeInvalid time格式错误
+	ErrTimeInvalid = errors.New("invalid times")
+	//ErrField 字符串字段不足
+	ErrField = errors.New("field not enough")
+	//ErrLastDayOfMonth指定LastDayOfMonth的格式错误
 	ErrLastDayOfMonth = errors.New(`LastDayOfMonth only accept "L", "dom" and "dow" must be "*"`)
 )
 
@@ -78,7 +83,7 @@ func checkSlash(s string) bool {
 	return false
 }
 
-// 分割'/'获取int类型的时间切片
+//分割'/'获取int类型的时间切片
 func splitSlash(s, typ string) ([]int, error) {
 	ss := strings.Split(s, slash)
 	//如果不是1/2这种格式，返回错误
@@ -87,7 +92,7 @@ func splitSlash(s, typ string) ([]int, error) {
 	}
 	//检查间隔是否有效
 	if !checkSlash(ss[1]) {
-		return nil, errors.New(fmt.Sprintf(`"%s": the number after %s must be one of: %s`, typ, slash, slashOption))
+		return nil, fmt.Errorf(`"%s": the number after %s must be one of: %s`, typ, slash, slashOption)
 	}
 
 	op := timeOption[typ]
@@ -102,7 +107,7 @@ func splitSlash(s, typ string) ([]int, error) {
 		return nil, err
 	}
 	if s1 < min || s1 > max {
-		return nil, errors.New(fmt.Sprintf(`"%s": use %s: %d-%d`, typ, slash, min, max))
+		return nil, fmt.Errorf(`"%s": use %s: %d-%d`, typ, slash, min, max)
 	}
 
 	res := make([]int, 0)
@@ -112,7 +117,7 @@ func splitSlash(s, typ string) ([]int, error) {
 	return res, nil
 }
 
-// 新增时间数值a到现有切片s，a可能是[]int，或者是int
+//Add新增时间数值a到现有切片s，a可能是[]int，或者是int
 func Add(s []int, a interface{}) []int {
 	switch a.(type) {
 	case int:
@@ -163,10 +168,10 @@ func splitHyphen(s, typ string) ([]int, error) {
 		return nil, err
 	}
 	if s1 < min || s1 > max {
-		return nil, errors.New(fmt.Sprintf(`"%s": the number before %s can not less than %d or more than %d`, typ, hyphen, min, max))
+		return nil, fmt.Errorf(`"%s": the number before %s can not less than %d or more than %d`, typ, hyphen, min, max)
 	}
 	if s2 < s1 || s2 > max {
-		return nil, errors.New(fmt.Sprintf(`"%s": the number after %s can not less than %d or more than %d`, typ, hyphen, s1, max))
+		return nil, fmt.Errorf(`"%s": the number after %s can not less than %d or more than %d`, typ, hyphen, s1, max)
 	}
 
 	res := make([]int, 0)
@@ -176,7 +181,7 @@ func splitHyphen(s, typ string) ([]int, error) {
 	return res, nil
 }
 
-// 获取以","组成的数值
+//获取以","组成的数值
 func splitComma(s, typ string) ([]int, error) {
 	times := make([]int, 0)
 	//s是"*",返回所有有效值
@@ -227,10 +232,9 @@ func splitComma(s, typ string) ([]int, error) {
 		return nil, ErrTimeInvalid
 	}
 	return times, nil
-
 }
 
-// 解析字符串s到*Time，失败返回错误
+//Parse解析字符串s到*Time，失败返回错误
 func Parse(s string) (*Time, error) {
 	ss := strings.Fields(s)
 	lastDom := false
@@ -282,7 +286,7 @@ func Parse(s string) (*Time, error) {
 	return &Time{second, minute, hour, nil, month, nil, lastDom}, nil
 }
 
-// 检查a是否存在b
+//检查a是否存在b
 func checkInt(a []int, b int) bool {
 	for i := 0; i < len(a); i++ {
 		if a[i] == b {
@@ -292,7 +296,7 @@ func checkInt(a []int, b int) bool {
 	return false
 }
 
-// get last day of month, m is the month, y is year
+//lastday get last day of month, m is the month, y is year
 func lastDay(m, y int) int {
 	switch m {
 	case 1, 3, 5, 7, 8, 10, 12:
@@ -309,7 +313,7 @@ func lastDay(m, y int) int {
 	return last.Day()
 }
 
-// 检查时间u是否符合时间t的定义
+//Check检查时间u是否符合时间t的定义
 func (t *Time) Check(u time.Time) bool {
 	if !(time.Now().Sub(u) < 500*time.Millisecond) {
 		return false

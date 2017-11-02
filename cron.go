@@ -1,4 +1,4 @@
-// Package cron 提供一个基本的定时任务管理工具
+//Package cron 提供一个基本的定时任务管理工具
 //  使用方法在测试文件和Readme
 package cron
 
@@ -11,39 +11,49 @@ import (
 )
 
 const (
-	// duration of send time to job's chan
+	//duration of send time to job's chan
 	jobTimeout = 10
 
-	// time used usually
+	//time used usually
+	//每月
 	Monthly = "0 3  3 1 * *"
-	Weekly  = "0 13 3 * * 0"
-	Daily   = "0 23 3 * * *"
-	Hourly  = "0 33 * * * *"
-	Minute  = "0 *  * * * *"
-	Second  = "* *  * * * *"
+	//每周
+	Weekly = "0 13 3 * * 0"
+	//每天
+	Daily = "0 23 3 * * *"
+	//每小时
+	Hourly = "0 33 * * * *"
+	//每分钟
+	Minute = "0 *  * * * *"
+	//每秒
+	Second = "* *  * * * *"
 )
 
 var (
-	ErrCronClosed   = errors.New("Cron schedule stopped")
+	//ErrCronClosed关闭cron
+	ErrCronClosed = errors.New("Cron schedule stopped")
+	//ErrCleanChannel清理channel
 	ErrCleanChannel = errors.New("Cron stopped, clean error channel")
-	ErrChanClosed   = errors.New("Channel closed")
+	//ErrChanClosed channel已关闭
+	ErrChanClosed = errors.New("Channel closed")
 )
 
-// Job is cron schedule work
+//Job is cron schedule work
 type Job struct {
-	// Name used for store or delete job
+	//Name used for store or delete job
 	Name string
+	//Time任务时间定义
 	Time *Time
-	// what to do
+	//Func is what to do
 	Func func()
 
-	// used for stop the job
+	//used for stop the job
 	cancel context.CancelFunc
-	// receive time
+	//receive time
 	c chan time.Time
 }
 
-// cancel the job
+//Cancel the job
 func (job *Job) Cancel() {
 	job.cancel()
 	select {
@@ -52,7 +62,7 @@ func (job *Job) Cancel() {
 	}
 }
 
-// run job, return when  read from ctx.Done()
+//Run job, return when  read from ctx.Done()
 func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 	for {
 		select {
@@ -68,7 +78,7 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 	}
 }
 
-// cron 管理所有任务，每一秒向Jobs内的所有成员发送当前时间
+//Cron 管理所有任务，每一秒向Jobs内的所有成员发送当前时间
 type Cron struct {
 	Jobs *sync.Map
 
@@ -76,13 +86,13 @@ type Cron struct {
 	cancel context.CancelFunc
 }
 
-// 创建一个新的Cron, 使用context.WithCancel新建ctx和cancel, cancel在New函数使用，ctx分别用于Start函数和AddFunc函数
+//New创建一个新的Cron, 使用context.WithCancel新建ctx和cancel, cancel在New函数使用，ctx分别用于Start函数和AddFunc函数
 func New(cancel context.CancelFunc) *Cron {
 	jobs, ch := new(sync.Map), make(chan error)
 	return &Cron{jobs, ch, cancel}
 }
 
-// 等待读取cron发送的错误，f的参数是error
+//Wait等待读取cron发送的错误，f的参数是error
 func (c *Cron) Wait(f func(error)) {
 	for {
 		err, ok := <-c.err
@@ -94,7 +104,7 @@ func (c *Cron) Wait(f func(error)) {
 	}
 }
 
-// 添加成员到Cron，ctx是context.WithCancel的返回值
+//AddFunc添加成员到Cron，ctx是context.WithCancel的返回值
 func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	t, err := Parse(s)
 	if err != nil {
@@ -105,7 +115,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 
 	job := &Job{name, t, f, cancel, ch}
 	_, ok := c.Jobs.LoadOrStore(name, job)
-	// 如果任务已经存在，返回错误到c.err，否则执行job.Func
+	//如果任务已经存在，返回错误到c.err，否则执行job.Func
 	if ok {
 		send(c.err, fmt.Errorf("Job [%s] is already exists", name))
 		return
@@ -113,7 +123,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	go job.Run(ctx, c.err)
 }
 
-// 删除名称为name的任务
+//Delete删除名称为name的任务
 func (c *Cron) Delete(name string) {
 	job, ok := c.Jobs.Load(name)
 	if ok {
@@ -133,7 +143,7 @@ func send(ch chan<- error, err error) {
 	ch <- err
 }
 
-// 启动Cron，定时器为1秒
+//Start启动Cron，定时器为1秒
 func (c *Cron) Start(ctx context.Context) {
 	tick := time.Tick(1 * time.Second)
 	for {
@@ -160,6 +170,7 @@ func (c *Cron) Start(ctx context.Context) {
 	}
 }
 
+//Stop停止计划任务管理器
 func (c *Cron) Stop() {
 	c.cancel()
 }
