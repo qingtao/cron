@@ -84,7 +84,7 @@ func TestSplit(t *testing.T) {
 		"0-23",
 		"1-6",
 	}
-	for name := range timeOption {
+	for name := range timeOptions {
 		t.Run(name, func(t *testing.T) {
 			for k, v := range s {
 				a, err := splitHyphen(v, name)

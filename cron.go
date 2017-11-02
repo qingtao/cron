@@ -8,29 +8,29 @@ import (
 	"time"
 )
 
+//time used usually
 const (
-	//duration of send time to job's chan
+	//jobTimeout duration of send time to job's chan
 	jobTimeout = 10
 
-	//time used usually
-	//每月
+	//Monthly 每月
 	Monthly = "0 3  3 1 * *"
-	//每周
+	//Weekly 每周
 	Weekly = "0 13 3 * * 0"
-	//每天
+	//Daily 每天
 	Daily = "0 23 3 * * *"
-	//每小时
+	//Hourly 每小时
 	Hourly = "0 33 * * * *"
-	//每分钟
+	//Minute 每分钟
 	Minute = "0 *  * * * *"
-	//每秒
+	//Second 每秒
 	Second = "* *  * * * *"
 )
 
 var (
-	//ErrCronClosed关闭cron
+	//ErrCronClosed 关闭cron
 	ErrCronClosed = errors.New("Cron schedule stopped")
-	//ErrCleanChannel清理channel
+	//ErrCleanChannel 清理channel
 	ErrCleanChannel = errors.New("Cron stopped, clean error channel")
 	//ErrChanClosed channel已关闭
 	ErrChanClosed = errors.New("Channel closed")
@@ -84,13 +84,13 @@ type Cron struct {
 	cancel context.CancelFunc
 }
 
-//New创建一个新的Cron, 使用context.WithCancel新建ctx和cancel, cancel在New函数使用，ctx分别用于Start函数和AddFunc函数
+//New 创建一个新的Cron, 使用context.WithCancel新建ctx和cancel, cancel在New函数使用，ctx分别用于Start函数和AddFunc函数
 func New(cancel context.CancelFunc) *Cron {
 	jobs, ch := new(sync.Map), make(chan error)
 	return &Cron{jobs, ch, cancel}
 }
 
-//Wait等待读取cron发送的错误，f的参数是error
+//Wait 等待读取cron发送的错误，f的参数是error
 func (c *Cron) Wait(f func(error)) {
 	for {
 		err, ok := <-c.err
@@ -102,7 +102,7 @@ func (c *Cron) Wait(f func(error)) {
 	}
 }
 
-//AddFunc添加成员到Cron，ctx是context.WithCancel的返回值
+//AddFunc 添加成员到Cron，ctx是context.WithCancel的返回值
 func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	t, err := Parse(s)
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	go job.Run(ctx, c.err)
 }
 
-//Delete删除名称为name的任务
+//Delete 删除名称为name的任务
 func (c *Cron) Delete(name string) {
 	job, ok := c.Jobs.Load(name)
 	if ok {
@@ -141,7 +141,7 @@ func send(ch chan<- error, err error) {
 	ch <- err
 }
 
-//Start启动Cron，定时器为1秒
+//Start 启动Cron，定时器为1秒
 func (c *Cron) Start(ctx context.Context) {
 	tick := time.Tick(1 * time.Second)
 	for {
@@ -168,7 +168,7 @@ func (c *Cron) Start(ctx context.Context) {
 	}
 }
 
-//Stop停止计划任务管理器
+//Stop 停止计划任务管理器
 func (c *Cron) Stop() {
 	c.cancel()
 }

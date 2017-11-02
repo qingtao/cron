@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//Time存放任务的时间
+//Time 存放任务的时间
 //格式:
 //	second	minute	hour	dom		month	dow
 //	秒	分	时	每月的第一天	月	每周的第几天
@@ -21,7 +21,7 @@ import (
 //	LastDayOfMonth: 指定每月中的最后一天
 //
 //	例: 每天6点 s = "0 0 6 * * *"
-// 注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
+//  注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
 type Time struct {
 	Second []int `json:"second"`
 	Minute []int `json:"minute"`
@@ -41,15 +41,15 @@ const (
 	lengthTime = 6
 )
 
-//定义'/'递增的数值
+//slashOption 定义'/'递增的数值
 var slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
 
-//TimeOption时间的最小和最大值
-type TimeOption struct {
+//timeOption 时间的最小和最大值
+type timeOption struct {
 	Min, Max int
 }
 
-var timeOption = map[string]TimeOption{
+var timeOptions = map[string]timeOption{
 	"second": {0, 59},
 	"minute": {0, 59},
 	"hour":   {0, 23},
@@ -58,7 +58,7 @@ var timeOption = map[string]TimeOption{
 	"dow":    {0, 6},
 }
 
-//LastDayOfMonth是Time的第七个字段
+//LastDayOfMonth 是Time的第七个字段
 const LastDayOfMonth = "L"
 
 var (
@@ -70,7 +70,7 @@ var (
 	ErrTimeInvalid = errors.New("invalid times")
 	//ErrField 字符串字段不足
 	ErrField = errors.New("field not enough")
-	//ErrLastDayOfMonth指定LastDayOfMonth的格式错误
+	//ErrLastDayOfMonth 指定LastDayOfMonth的格式错误
 	ErrLastDayOfMonth = errors.New(`LastDayOfMonth only accept "L", "dom" and "dow" must be "*"`)
 )
 
@@ -95,7 +95,7 @@ func splitSlash(s, typ string) ([]int, error) {
 		return nil, fmt.Errorf(`"%s": the number after %s must be one of: %s`, typ, slash, slashOption)
 	}
 
-	op := timeOption[typ]
+	op := timeOptions[typ]
 	min, max := op.Min, op.Max
 	//转换字符串到整型数值
 	s1, err := strconv.Atoi(ss[0])
@@ -117,7 +117,7 @@ func splitSlash(s, typ string) ([]int, error) {
 	return res, nil
 }
 
-//Add新增时间数值a到现有切片s，a可能是[]int，或者是int
+//Add 新增时间数值a到现有切片s，a可能是[]int，或者是int
 func Add(s []int, a interface{}) []int {
 	switch a.(type) {
 	case int:
@@ -151,13 +151,13 @@ func Add(s []int, a interface{}) []int {
 	return s
 }
 
-//分割-
+//分割"-"
 func splitHyphen(s, typ string) ([]int, error) {
 	ss := strings.Split(s, hyphen)
 	if len(ss) != 2 {
 		return nil, ErrNoHyphen
 	}
-	op := timeOption[typ]
+	op := timeOptions[typ]
 	min, max := op.Min, op.Max
 	s1, err := strconv.Atoi(ss[0])
 	if err != nil {
@@ -186,7 +186,7 @@ func splitComma(s, typ string) ([]int, error) {
 	times := make([]int, 0)
 	//s是"*",返回所有有效值
 	if s == "*" {
-		op := timeOption[typ]
+		op := timeOptions[typ]
 		min, max := op.Min, op.Max
 		for i := min; i <= max; i++ {
 			times = append(times, i)
@@ -234,7 +234,7 @@ func splitComma(s, typ string) ([]int, error) {
 	return times, nil
 }
 
-//Parse解析字符串s到*Time，失败返回错误
+//Parse 解析字符串s到*Time，失败返回错误
 func Parse(s string) (*Time, error) {
 	ss := strings.Fields(s)
 	lastDom := false
@@ -286,7 +286,7 @@ func Parse(s string) (*Time, error) {
 	return &Time{second, minute, hour, nil, month, nil, lastDom}, nil
 }
 
-//检查a是否存在b
+//checkInt 检查a是否存在b
 func checkInt(a []int, b int) bool {
 	for i := 0; i < len(a); i++ {
 		if a[i] == b {
@@ -313,7 +313,7 @@ func lastDay(m, y int) int {
 	return last.Day()
 }
 
-//Check检查时间u是否符合时间t的定义
+//Check 检查时间u是否符合时间t的定义
 func (t *Time) Check(u time.Time) bool {
 	if !(time.Now().Sub(u) < 500*time.Millisecond) {
 		return false
