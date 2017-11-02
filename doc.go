@@ -7,7 +7,7 @@ Example:
 
 	import (
 		"context"
-		"cron"
+		"github.com/qingtao/cron"
 		"fmt"
 		"time"
 	)
