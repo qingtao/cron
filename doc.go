@@ -28,7 +28,7 @@ Example:
 
 		//定义时间
 		s1 := "1/2 * * * * *"
-		s1 := "15 13 * * * *"
+		s2 := "15 13 * * * *"
 		//添加计划任务
 		c.AddFunc(ctx, "s1", s1, func() {
 			fmt.Printf("s1 %s: %s\n", s1, time.Now())
