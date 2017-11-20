@@ -27,7 +27,6 @@ import (
 //	每个月最后一天:
 //		s = "0 0 0 * * * L"
 // 注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
-
 type Time struct {
 	Second []int `json:"second"`
 	Minute []int `json:"minute"`
