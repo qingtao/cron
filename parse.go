@@ -20,7 +20,9 @@ import (
 //	dow:	0-6  , - / * 每周第几天
 //	LastDayOfMonth: 指定每月中的最后一天
 //
-//	例: 每天6点 s = "0 0 6 * * *"
+//	例:
+//		每天6点: s = "0 0 6 * * *"
+//		每个月最后一天: s = "0 0 0 * * * L"
 // 注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
 type Time struct {
 	Second []int `json:"second"`
@@ -195,6 +197,7 @@ func splitComma(s, typ string) ([]int, error) {
 		//首先以","分割字符串
 		ss := strings.Split(s, comma)
 		for _, v := range ss {
+			//分割"/"
 			n := strings.Index(v, slash)
 			if n > 0 {
 				t, err := splitSlash(v, typ)
@@ -206,6 +209,7 @@ func splitComma(s, typ string) ([]int, error) {
 				}
 				times = append(times, t...)
 			} else {
+				//分割"-"
 				n = strings.Index(v, hyphen)
 				if n > 0 {
 					t, err := splitHyphen(v, typ)
@@ -216,13 +220,13 @@ func splitComma(s, typ string) ([]int, error) {
 						return nil, err
 					}
 					times = Add(times, t)
-					//单个数字的情况
-				} else if len(ss) == 1 {
-					i, err := strconv.Atoi(s)
+					//单个数字的情况,或者以","分割的单个数据
+				} else if len(ss) > 0 {
+					m, err := strconv.Atoi(v)
 					if err != nil {
 						return nil, err
 					}
-					times = append(times, i)
+					times = append(times, m)
 				}
 
 			}
