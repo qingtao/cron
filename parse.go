@@ -21,8 +21,10 @@ import (
 //	LastDayOfMonth: 指定每月中的最后一天
 //
 //	例:
-//		每天6点: s = "0 0 6 * * *"
-//		每个月最后一天: s = "0 0 0 * * * L"
+//	每天6点:
+//		s = "0 0 6 * * *"
+//	每个月最后一天:
+//		s = "0 0 0 * * * L"
 // 注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
 type Time struct {
 	Second []int `json:"second"`
