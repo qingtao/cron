@@ -20,14 +20,12 @@ import (
 //	dow:	0-6  , - / * 每周第几天
 //	LastDayOfMonth: 指定每月中的最后一天
 //
-//
 //	例:
 //	每天6点:
 //		s = "0 0 6 * * *"
 //	每个月最后一天:
 //		s = "0 0 0 * * * L"
 // 注意: dom和dow都不是*时，时间是两者交集，指定LastDayOfMonth，Dom和Dow必须同时是"*"
-
 type Time struct {
 	Second []int `json:"second"`
 	Minute []int `json:"minute"`
@@ -74,6 +72,8 @@ var (
 	ErrNoHyphen = errors.New("no hyphen")
 	//ErrTimeInvalid time格式错误
 	ErrTimeInvalid = errors.New("invalid times")
+	//ErrAtoiInvalid time字符串转换为整数错误
+	ErrAtoiInvalid = errors.New("invalid integer")
 	//ErrField 字符串字段不足
 	ErrField = errors.New("field not enough")
 	//ErrLastDayOfMonth 指定LastDayOfMonth的格式错误
@@ -225,10 +225,10 @@ func splitComma(s, typ string) ([]int, error) {
 					}
 					times = Add(times, t)
 					//单个数字的情况,或者以","分割的单个数据
-				} else if len(ss) > 0 {
+				} else {
 					m, err := strconv.Atoi(v)
 					if err != nil {
-						return nil, err
+						return nil, ErrAtoiInvalid
 					}
 					times = append(times, m)
 				}
