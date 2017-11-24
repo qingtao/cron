@@ -48,8 +48,7 @@ const (
 )
 
 //slashOption 定义'/'递增的数值
-var	slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
-
+var slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
 
 //timeOption 时间的最小和最大值
 type timeOption struct {
