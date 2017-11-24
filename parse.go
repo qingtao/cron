@@ -48,7 +48,8 @@ const (
 )
 
 //slashOption 定义'/'递增的数值
-var slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
+var	slashOption = []string{"2", "3", "4", "5", "6", "10", "12", "15", "20", "30"}
+
 
 //timeOption 时间的最小和最大值
 type timeOption struct {
@@ -324,8 +325,8 @@ func lastDay(m, y int) int {
 }
 
 //Check 检查时间u是否符合时间t的定义
-func (t *Time) Check(u time.Time) bool {
-	if time.Now().Sub(u) > 500*time.Millisecond {
+func (t *Time) Check(u time.Time, delay int) bool {
+	if time.Now().Sub(u) > time.Duration(delay)*time.Millisecond {
 		return false
 	}
 	y, m, d := u.Date()

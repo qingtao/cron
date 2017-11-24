@@ -152,7 +152,7 @@ func TestCheck(t *testing.T) {
 	for k, v := range a {
 		fmt.Printf("%2d - %v\n", k, v)
 		for kk, vv := range u {
-			fmt.Printf("%2d - %d-%d-%d %v\n", kk, vv.Year(), vv.Month(), vv.Day(), v.Check(vv))
+			fmt.Printf("%2d - %d-%d-%d %v\n", kk, vv.Year(), vv.Month(), vv.Day(), v.Check(vv, delayTime))
 		}
 	}
 

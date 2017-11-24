@@ -11,7 +11,7 @@ import (
 //time used usually
 const (
 	//jobTimeout duration of send time to job's chan
-	jobTimeout = 10
+	JobTimeout = 20
 
 	//Monthly 每月
 	Monthly = "0 3  3 1 * *"
@@ -42,6 +42,8 @@ type Job struct {
 	Name string
 	//Time任务时间定义
 	Time *Time
+	//Delay is max delay time, unit: Millisecond
+	Delay int
 	//Func is what to do
 	Func func()
 
@@ -69,7 +71,7 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 			return
 		case u, ok := <-job.c:
 			// check time, run job.Func or not
-			if ok && job.Time.Check(u) {
+			if ok && job.Time.Check(u, job.Delay) {
 				go job.Func()
 			}
 		}
@@ -78,6 +80,7 @@ func (job *Job) Run(ctx context.Context, errCh chan<- error) {
 
 //Cron 管理所有任务，每一秒向Jobs内的所有成员发送当前时间
 type Cron struct {
+	//Jobs 任务集合
 	Jobs *sync.Map
 
 	err    chan error
@@ -103,7 +106,7 @@ func (c *Cron) Wait(f func(error)) {
 }
 
 //AddFunc 添加成员到Cron，ctx是context.WithCancel的返回值
-func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
+func (c *Cron) AddFunc(ctx context.Context, name, s string, delay int, f func()) {
 	t, err := Parse(s)
 	if err != nil {
 		send(c.err, err)
@@ -111,7 +114,7 @@ func (c *Cron) AddFunc(ctx context.Context, name, s string, f func()) {
 	ch := make(chan time.Time)
 	ctx, cancel := context.WithCancel(ctx)
 
-	job := &Job{name, t, f, cancel, ch}
+	job := &Job{name, t, delay, f, cancel, ch}
 	_, ok := c.Jobs.LoadOrStore(name, job)
 	//如果任务已经存在，返回错误到c.err，否则执行job.Func
 	if ok {
@@ -153,7 +156,7 @@ func (c *Cron) Start(ctx context.Context) {
 					select {
 					case job.c <- t:
 					//发送超时时间
-					case <-time.After(time.Duration(jobTimeout) * time.Microsecond):
+					case <-time.After(time.Duration(JobTimeout) * time.Microsecond):
 						send(c.err, fmt.Errorf("Cron wake job [%s] timeout", job.Name))
 					}
 				}
