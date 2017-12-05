@@ -31,10 +31,10 @@ Example:
 		s1 := "1/2 * * * * *"
 		s2 := "15 13 * * * *"
 		//添加计划任务
-		c.AddFunc(ctx, "s1", s1, func() {
+		c.AddFunc(ctx, "s1", s1, 900, func() {
 			fmt.Printf("s1 %s: %s\n", s1, time.Now())
 		})
-		c.AddFunc(ctx, "s2", s2, func() {
+		c.AddFunc(ctx, "s2", s2, 900, func() {
 			fmt.Printf("s2 %s: %s\n", s2, time.Now())
 		})
 	}
